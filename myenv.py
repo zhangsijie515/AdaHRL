@@ -22,7 +22,6 @@ class MyEnv(MiniGridEnv):
 
     def _gen_grid(self, width, height):
         self.grid = Grid(width, height)
-        # 放置墙体
         self.grid.wall_rect(0, 0, width, height)
         self.grid.wall_rect(1, 1, 2, 2)
         self.grid.wall_rect(8, 1, 2, 2)
@@ -33,22 +32,18 @@ class MyEnv(MiniGridEnv):
         self.grid.vert_wall(3, 1, height - 2)
         self.grid.vert_wall(7, 1, height - 2)
 
-        # 放置门
         self.put_obj(Door('red', is_locked=True), 5, 3)
         self.put_obj(Door('blue', is_locked=True), 7, 5)
         self.put_obj(Door('green', is_locked=True), 5, 7)
         self.put_obj(Door('yellow', is_locked=True), 3, 5)
 
-        # 放置钥匙
         self.put_obj(Key('red'), 4, 4)
         self.put_obj(Key('green'), 5, 1)
         self.put_obj(Key('blue'), 5, height - 2)
         self.put_obj(Key('yellow'), width - 2, 5)
 
-        # 放置最终目标
         self.put_obj(Goal(), 1, 5)
 
-        # 放置智能体
         self.agent_pos = (5, 5)
         self.agent_dir = 0
 
@@ -110,18 +105,11 @@ class MyEnv(MiniGridEnv):
         else:
             return img
 
-    # meta
-    # 拿到钥匙: r = 10
-    # 到达终点: r = 100
-    # else:   r = 0
 
-    # controller
-    # 时间惩罚: r = -1
-    # 到达子目标: r = 10(在train函数中修改)
 
     def step(self, action):
-        reward = 0  # 环境本身的奖励（meta_controller使用）
-        reward_ = -1  # 内在奖励（controller使用）
+        reward = 0  
+        reward_ = -1  
         done = False
         keys = []
         win = False
@@ -140,29 +128,22 @@ class MyEnv(MiniGridEnv):
             next_agent_pos = self.agent_pos + np.array((-1, 0))
 
         next_cell = self.grid.get(*next_agent_pos)
-        # 空地
         if next_cell is None:
             self.agent_pos = next_agent_pos
-        # 非空地：包括可重叠和不可重叠
         else:
-            # 若重叠
             if next_cell.can_overlap():
-                # 已经打开的门
                 if next_cell.type == 'door':
                     self.agent_pos = next_agent_pos
-                # 最终目标，游戏结束
                 if next_cell.type == 'goal':
                     done = True
                     reward = 100
                     win = True
                 self.agent_pos = next_agent_pos
-            # 不可重叠----钥匙
             elif next_cell is not None and next_cell.type == 'key':
                 reward = 10
                 self.carrying.append(next_cell)
                 self.grid.set(*next_agent_pos, None)
                 self.agent_pos = next_agent_pos
-            # 不可重叠----关闭的门
             elif next_cell is not None and next_cell.type == 'door':
                 for i in self.carrying:
                     if i.color == next_cell.color:
@@ -175,7 +156,6 @@ class MyEnv(MiniGridEnv):
         if self.step_count >= self.max_steps:
             done = True
 
-        # 返回手上还剩下的钥匙
         if len(self.carrying) > 0:
             for i in self.carrying:
                 keys.append(i.color)
