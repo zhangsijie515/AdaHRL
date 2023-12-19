@@ -1,2 +1,2 @@
 # AdaHRL
-The full code will be released in the near future.
+The full code will be released as soon as it's sorted out
