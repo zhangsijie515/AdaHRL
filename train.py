@@ -119,7 +119,7 @@ class MetaControllerOurs:
     def to_controller_input(self):
         s = np.array(self.s)
         goal_from_meta = np.array(self.goal_from_meta)
-        Input = np.concatenate((s, goal_from_meta)).reshape(-1, 2, 2)  # 环境
+        Input = np.concatenate((s, goal_from_meta)).reshape(-1, 2, 2) 
         Input = tf.one_hot(Input, 9, axis=-1, dtype=tf.float32)
         return Input
 
@@ -135,7 +135,6 @@ class MetaControllerOurs:
     def update_meta_controller(self, batch_size=32):
         if self.meta_controller_buffer.__len__() >= batch_size:
             current_goal, arrived_goal, r = self.meta_controller_buffer.sample(batch_size)
-            # 数据准备
             current_goal = tf.one_hot(current_goal, 6)
             arrived_goal = tf.one_hot(arrived_goal, 6)
             r = tf.convert_to_tensor(r, dtype=tf.float32)
@@ -169,20 +168,6 @@ class MetaControllerOurs:
             return loss
         else:
             return np.inf
-
-    def add_knowledge_epsilon(self):
-        if self.knowledge_epsilon < 0.9:
-            self.knowledge_epsilon += 0.001 * self.knowledge_epsilon
-
-    def add_epsilon(self, track, epsilon):
-        for s in track:
-            index = self.goals.index(self.to_goal_class(s))
-            if epsilon[index] < 0.9:
-                epsilon[index] += 0.01 * epsilon[index]
-        if (index + 1) < len(epsilon):
-            if epsilon[index + 1] < 0.9:
-                epsilon[index + 1] += 0.005 * epsilon[index + 1]
-        return epsilon
 
     def train(self):
         np.set_printoptions(precision=3)
